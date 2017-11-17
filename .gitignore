@@ -95,3 +95,4 @@ ENV/
 #### Shaked:
 **/*.pyc
 
+CapsNet-Keras/result/

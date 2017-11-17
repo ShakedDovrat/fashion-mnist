@@ -20,6 +20,13 @@ from keras import layers, models, optimizers
 from keras import backend as K
 from keras.utils import to_categorical
 from capsulelayers import CapsuleLayer, PrimaryCap, Length, Mask
+import os
+import sys
+import inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir)
+import bridge
 
 K.set_image_data_format('channels_last')
 
@@ -177,7 +184,7 @@ if __name__ == "__main__":
     # setting the hyper parameters
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', default=100, type=int)
+    parser.add_argument('--batch_size', default=2**8, type=int)
     parser.add_argument('--epochs', default=50, type=int)
     parser.add_argument('--lam_recon', default=0.392, type=float)  # 784 * 0.0005, paper uses sum of SE, here uses MSE
     parser.add_argument('--num_routing', default=3, type=int)  # num_routing should > 0
@@ -193,14 +200,14 @@ if __name__ == "__main__":
         os.makedirs(args.save_dir)
 
     # load data
-    (x_train, y_train), (x_test, y_test) = load_mnist()
+    (x_train, y_train), (x_test, y_test) = bridge.load_fashion_mnist()
 
     # define model
     model, eval_model = CapsNet(input_shape=x_train.shape[1:],
                                 n_class=len(np.unique(np.argmax(y_train, 1))),
                                 num_routing=args.num_routing)
     model.summary()
-    plot_model(model, to_file=args.save_dir+'/model.png', show_shapes=True)
+    # plot_model(model, to_file=args.save_dir+'/model.png', show_shapes=True)
 
     # train or test
     if args.weights is not None:  # init the model weights with provided one
