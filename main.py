@@ -1,6 +1,8 @@
 import sys
 import logging
 import datetime
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,15 +10,40 @@ from keras.layers import Input, Dense, Activation, Flatten, Conv2D, MaxPooling2D
 from keras.models import Model
 from keras.optimizers import Adam
 from keras.callbacks import ReduceLROnPlateau, EarlyStopping, ModelCheckpoint, TensorBoard
-#from keras import backend as K
 
 from utils import mnist_reader
+
+
+class Logger(object):
+    def __init__(self, log_file_name):
+        self.terminal = sys.stdout
+        Logger._set_logger(log_file_name)
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.terminal.flush()
+        logging.info(message)
+
+    def flush(self):
+        #this flush method is needed for python 3 compatibility.
+        #this handles the flush command by doing nothing.
+        #you might want to specify some extra behavior here.
+        pass
+
+    @staticmethod
+    def _set_logger(log_file_name):
+        logger = logging.getLogger()
+        handler = logging.FileHandler(log_file_name)
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
 
 
 class Config(object):
     def __init__(self):
         self.image_size = (28, 28, 1)
-        self.model = shallow_model
+        self.model = third_model_global_average_pooling
         self.model_name = self.model.__name__
 
 
@@ -26,27 +53,12 @@ def get_logger_filename():
     return handler.baseFilename
 
 
-# def my_print(*args):
-#     print(*args)
-#     print(*args, file=get_logger_filename())
-
-
-def print_model_summary(c, model):
-    logging.info('Using {}:'.format(c.model_name))
-    model.summary()  # print to stdout
-
-    orig_stdout = sys.stdout
-    fid = open(get_logger_filename(), 'a')
-    sys.stdout = fid
-    model.summary()  # print to log file
-    sys.stdout = orig_stdout
-    fid.close()
-
-
 def main():
-    c = Config()
     model_name = get_model_name()
-    set_logger(model_name)
+    log_file_name = 'logs/{}.log'.format(model_name)
+#     with Logger(log_file_name) as sys.stdout:
+    sys.stdout = Logger(log_file_name)
+    c = Config()
     model = build_model(c)
     compile_model(model)
     train_set, test_set = load_data(c.image_size)
@@ -62,12 +74,6 @@ def get_model_name():
 def set_logger(model_name):
     log_file_name = 'logs/{}.log'.format(model_name)
 
-    logger = logging.getLogger()
-    handler = logging.FileHandler(log_file_name)
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
 
 
 def load_data(image_size):
@@ -82,12 +88,18 @@ def load_single_dataset(kind, image_size):
     x = np.reshape(x, x_resize_shape)
     y = np.reshape(y, (-1, 1))
 
+    x = x.astype(np.float32)# / 255
+    y = y.astype(np.float32)# / 255
+
     return {'x': x, 'y': y}
 
 
 def build_model(c):
     model = c.model(c.image_size)
-    print_model_summary(c, model)
+
+    print('Using {}:'.format(c.model_name))
+    model.summary()
+
     return model
 
 
@@ -113,6 +125,73 @@ def first_model(image_size):
     x = Activation('relu')(x)
 
     x = Flatten()(x)
+    x = Dense(100)(x)
+    x = Activation('relu')(x)
+    x = BatchNormalization()(x)
+    x = Dense(10)(x)
+    x = Activation('softmax')(x)
+
+    return Model(img_input, x)
+
+
+def second_model_BN_after_relu(image_size):
+    img_input = Input(image_size)
+
+    x = Conv2D(16, 3, 3, border_mode='same')(img_input)
+    x = Activation('relu')(x)
+    x = BatchNormalization()(x)
+
+    x = Conv2D(16, 3, 3, border_mode='same')(x)
+    x = MaxPooling2D((2, 2))(x)
+    x = Activation('relu')(x)
+    x = BatchNormalization()(x)
+
+    x = Conv2D(32, 3, 3, border_mode='same')(x)
+    x = Activation('relu')(x)
+    x = BatchNormalization()(x)
+
+    x = Conv2D(32, 3, 3, border_mode='same')(x)
+    x = MaxPooling2D((2, 2))(x)
+    x = Activation('relu')(x)
+    x = BatchNormalization()(x)
+
+    x = Flatten()(x)
+    x = Dense(100)(x)
+    x = Activation('relu')(x)
+    x = BatchNormalization()(x)
+    x = Dense(10)(x)
+    x = Activation('softmax')(x)
+
+    return Model(img_input, x)
+
+
+def third_model_global_average_pooling(image_size):
+    img_input = Input(image_size)
+
+    x = Conv2D(16, 3, 3, border_mode='same')(img_input)
+    x = Activation('relu')(x)
+    x = BatchNormalization()(x)
+
+    x = Conv2D(16, 3, 3, border_mode='same')(x)
+    x = MaxPooling2D((2, 2))(x)
+    x = Activation('relu')(x)
+    x = BatchNormalization()(x)
+
+    x = Conv2D(32, 3, 3, border_mode='same')(x)
+    x = Activation('relu')(x)
+    x = BatchNormalization()(x)
+
+    x = Conv2D(32, 3, 3, border_mode='same')(x)
+    x = MaxPooling2D((2, 2))(x)
+    x = Activation('relu')(x)
+    # x = BatchNormalization()(x)
+    #
+    # x = Conv2D(64, 3, 3, border_mode='same')(x)
+    # x = Activation('relu')(x)
+    # x = BatchNormalization()(x)
+
+    x = GlobalAveragePooling2D()(x)
+
     x = Dense(100)(x)
     x = Activation('relu')(x)
     x = BatchNormalization()(x)
@@ -190,7 +269,7 @@ def plot_training_history(history, model_name):
     plt.title('model accuracy')
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
+    plt.legend(['train', 'val'], loc='upper left')
 
     # summarize history for loss
 
@@ -200,16 +279,21 @@ def plot_training_history(history, model_name):
     plt.title('model loss')
     plt.ylabel('loss')
     plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
+    plt.legend(['train', 'val'], loc='upper left')
 
     plt.savefig('logs/{}.png'.format(model_name))
+
+    plt.show()
+
+
+def f(msg):
+    print(msg)
 
 
 def test(model, dataset):
     metrics_list = model.evaluate(dataset['x'], dataset['y'], verbose=1)
-    logging.info('Test results:')
-    [logging.info('{} = {}'.format(name, value)) for name, value in zip(model.metrics_names, metrics_list)]
+    print('Test results:')
+    [f('{} = {}'.format(name, value)) for name, value in zip(model.metrics_names, metrics_list)]
 
 
 if __name__ == '__main__':
