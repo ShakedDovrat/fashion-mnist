@@ -55,9 +55,8 @@ def get_logger_filename():
 
 def main():
     model_name = get_model_name()
-    log_file_name = 'logs/{}.log'.format(model_name)
-#     with Logger(log_file_name) as sys.stdout:
-    sys.stdout = Logger(log_file_name)
+    # log_file_name = 'logs/{}.log'.format(model_name)
+    # sys.stdout = Logger(log_file_name)
     c = Config()
     model = build_model(c)
     compile_model(model)
@@ -106,20 +105,20 @@ def build_model(c):
 def first_model(image_size):
     img_input = Input(image_size)
 
-    x = Conv2D(16, 3, 3, border_mode='same')(img_input)
+    x = Conv2D(16, (3, 3), padding='same')(img_input)
     x = BatchNormalization()(x)
     x = Activation('relu')(x)
 
-    x = Conv2D(16, 3, 3, border_mode='same')(x)
+    x = Conv2D(16, (3, 3), padding='same')(x)
     x = BatchNormalization()(x)
     x = MaxPooling2D((2, 2))(x)
     x = Activation('relu')(x)
 
-    x = Conv2D(32, 3, 3, border_mode='same')(x)
+    x = Conv2D(32, (3, 3), padding='same')(x)
     x = BatchNormalization()(x)
     x = Activation('relu')(x)
 
-    x = Conv2D(32, 3, 3, border_mode='same')(x)
+    x = Conv2D(32, (3, 3), padding='same')(x)
     x = BatchNormalization()(x)
     x = MaxPooling2D((2, 2))(x)
     x = Activation('relu')(x)
@@ -137,20 +136,20 @@ def first_model(image_size):
 def second_model_BN_after_relu(image_size):
     img_input = Input(image_size)
 
-    x = Conv2D(16, 3, 3, border_mode='same')(img_input)
+    x = Conv2D(16, (3, 3), padding='same')(img_input)
     x = Activation('relu')(x)
     x = BatchNormalization()(x)
 
-    x = Conv2D(16, 3, 3, border_mode='same')(x)
+    x = Conv2D(16, (3, 3), padding='same')(x)
     x = MaxPooling2D((2, 2))(x)
     x = Activation('relu')(x)
     x = BatchNormalization()(x)
 
-    x = Conv2D(32, 3, 3, border_mode='same')(x)
+    x = Conv2D(32, (3, 3), padding='same')(x)
     x = Activation('relu')(x)
     x = BatchNormalization()(x)
 
-    x = Conv2D(32, 3, 3, border_mode='same')(x)
+    x = Conv2D(32, (3, 3), padding='same')(x)
     x = MaxPooling2D((2, 2))(x)
     x = Activation('relu')(x)
     x = BatchNormalization()(x)
@@ -168,25 +167,25 @@ def second_model_BN_after_relu(image_size):
 def third_model_global_average_pooling(image_size):
     img_input = Input(image_size)
 
-    x = Conv2D(16, 3, 3, border_mode='same')(img_input)
+    x = Conv2D(16, (3, 3), padding='same')(img_input)
     x = Activation('relu')(x)
     x = BatchNormalization()(x)
 
-    x = Conv2D(16, 3, 3, border_mode='same')(x)
+    x = Conv2D(16, (3, 3), padding='same')(x)
     x = MaxPooling2D((2, 2))(x)
     x = Activation('relu')(x)
     x = BatchNormalization()(x)
 
-    x = Conv2D(32, 3, 3, border_mode='same')(x)
+    x = Conv2D(32, (3, 3), padding='same')(x)
     x = Activation('relu')(x)
     x = BatchNormalization()(x)
 
-    x = Conv2D(32, 3, 3, border_mode='same')(x)
+    x = Conv2D(32, (3, 3), padding='same')(x)
     x = MaxPooling2D((2, 2))(x)
     x = Activation('relu')(x)
     # x = BatchNormalization()(x)
     #
-    # x = Conv2D(64, 3, 3, border_mode='same')(x)
+    # x = Conv2D(64, (3, 3), padding='same')(x)
     # x = Activation('relu')(x)
     # x = BatchNormalization()(x)
 
@@ -204,7 +203,7 @@ def third_model_global_average_pooling(image_size):
 def shallow_model(image_size):
     img_input = Input(image_size)
 
-    x = Conv2D(16, 3, 3, border_mode='valid')(img_input)
+    x = Conv2D(16, (3, 3), padding='valid')(img_input)
     x = BatchNormalization()(x)
     x = Activation('relu')(x)
 
