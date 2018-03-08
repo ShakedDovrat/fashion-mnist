@@ -18,7 +18,7 @@ class Config(object):
         self.model_name = self.model.__name__
         self.lr = 1e-4
         self.batch_size = 32
-        self.epochs = 20
+        self.epochs = 5
 
 
 def get_model_name():
