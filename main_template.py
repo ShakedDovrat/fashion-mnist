@@ -14,11 +14,11 @@ from models import *
 class Config(object):
     def __init__(self):
         self.image_size = (28, 28, 1)
-        self.model = shallow_model
+        self.model = ConvTwo_model  # shallow_model
         self.model_name = self.model.__name__
         self.lr = 1e-4
-        self.batch_size = 32
-        self.epochs = 5
+        self.batch_size = 64
+        self.epochs = 20
 
 
 def get_model_name():
@@ -77,7 +77,15 @@ def load_single_dataset(kind, image_size):
     x = x.astype(np.float32)# / 255
     y = y.astype(np.float32)# / 255
 
-    return {'x': x, 'y': y}
+    # ---------------
+
+    arXY = np.c_[x.reshape(len(x), -1), y.reshape(len(y), -1)]
+    np.random.shuffle(arXY)
+    x2 = arXY[:, :x.size // len(x)].reshape(x.shape)
+    y2 = arXY[:, x.size // len(x):].reshape(y.shape)
+
+
+    return {'x': x2, 'y': y2}
 
 
 def plot_training_history(history, model_name):

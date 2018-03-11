@@ -16,3 +16,19 @@ def shallow_model(image_size):
 
     return Model(img_input, x)
 
+def ConvTwo_model(image_size):
+    img_input = Input(image_size)
+
+    x = Conv2D(16, (3, 3), padding='valid')(img_input)
+    # x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+    x = Conv2D(32, (3, 3), padding='valid')(x)
+    # x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+
+    x = GlobalAveragePooling2D()(x)
+
+    x = Dense(10)(x)
+    x = Activation('softmax')(x)
+
+    return Model(img_input, x)
