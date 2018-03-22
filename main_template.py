@@ -8,7 +8,6 @@ from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
 from keras.datasets import fashion_mnist
 
-# from utils import mnist_reader
 from models import *
 
 
@@ -71,24 +70,6 @@ def load_data():
 def dataset_to_dict(dataset):
     x, y = dataset
     return {'x': x, 'y': y}
-
-
-# def load_data(image_size):
-#     return load_single_dataset('train', image_size), \
-#            load_single_dataset('t10k' , image_size)
-#
-#
-# def load_single_dataset(kind, image_size):
-#     x, y = mnist_reader.load_mnist('data/fashion', kind=kind)
-#
-#     x_resize_shape = (-1,) + image_size
-#     x = np.reshape(x, x_resize_shape)
-#     y = np.reshape(y, (-1, 1))
-#
-#     x = x.astype(np.float32)# / 255
-#     y = y.astype(np.float32)# / 255
-#
-#     return {'x': x, 'y': y}
 
 
 def plot_training_history(history, model_name):
