@@ -1,13 +1,14 @@
-import datetime
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+import datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
+from keras.datasets import fashion_mnist
 
-from utils import mnist_reader
+# from utils import mnist_reader
 from models import *
 
 
@@ -40,8 +41,8 @@ def compile_model(model, c):
     model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy'])
 
 
-def get_callbacks():
-    checkpoint_writer = ModelCheckpoint('weights.h5',
+def get_callbacks(model_name):
+    checkpoint_writer = ModelCheckpoint('{}weights.h5'.format(model_name),
                                         monitor='val_acc',
                                         verbose=1,
                                         save_best_only=True,
@@ -50,8 +51,8 @@ def get_callbacks():
     return [checkpoint_writer]
 
 
-def train(model, c, dataset):
-    callbacks = get_callbacks()
+def train(model, c, dataset, model_name):
+    callbacks = get_callbacks(model_name)
     history = model.fit(dataset['x'],
                         dataset['y'],
                         batch_size=c.batch_size,
@@ -62,22 +63,32 @@ def train(model, c, dataset):
     return history
 
 
-def load_data(image_size):
-    return load_single_dataset('train', image_size), \
-           load_single_dataset('t10k' , image_size)
+def load_data():
+    trainset, testset = fashion_mnist.load_data()
+    return dataset_to_dict(trainset), dataset_to_dict(testset)
 
 
-def load_single_dataset(kind, image_size):
-    x, y = mnist_reader.load_mnist('data/fashion', kind=kind)
-
-    x_resize_shape = (-1,) + image_size
-    x = np.reshape(x, x_resize_shape)
-    y = np.reshape(y, (-1, 1))
-
-    x = x.astype(np.float32)# / 255
-    y = y.astype(np.float32)# / 255
-
+def dataset_to_dict(dataset):
+    x, y = dataset
     return {'x': x, 'y': y}
+
+
+# def load_data(image_size):
+#     return load_single_dataset('train', image_size), \
+#            load_single_dataset('t10k' , image_size)
+#
+#
+# def load_single_dataset(kind, image_size):
+#     x, y = mnist_reader.load_mnist('data/fashion', kind=kind)
+#
+#     x_resize_shape = (-1,) + image_size
+#     x = np.reshape(x, x_resize_shape)
+#     y = np.reshape(y, (-1, 1))
+#
+#     x = x.astype(np.float32)# / 255
+#     y = y.astype(np.float32)# / 255
+#
+#     return {'x': x, 'y': y}
 
 
 def plot_training_history(history, model_name):
@@ -120,8 +131,8 @@ def main():
     c = Config()
     model = build_model(c)
     compile_model(model, c)
-    train_set, test_set = load_data(c.image_size)
-    history = train(model, c, train_set)
+    train_set, test_set = load_data()
+    history = train(model, c, train_set, model_name)
     plot_training_history(history, model_name)
 
 
